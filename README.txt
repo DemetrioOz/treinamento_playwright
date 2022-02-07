@@ -24,3 +24,7 @@ yarn add jest playwright
 > explicar passo a passo 
 > rodar com headless
 > depois sem o headless
+
+// explicar codigos da aula02 de
+
+// desafio de criar um login do ponto
