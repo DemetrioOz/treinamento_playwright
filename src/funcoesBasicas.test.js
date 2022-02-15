@@ -25,14 +25,13 @@ beforeEach(async () => {
 afterEach(async () => {
   // fecha a page
   // await page.close();
-
   // fecha o browser
-  await browser.close();
+  // await browser.close();
 });
 // executa depois de todos os testes
 afterAll(async () => {
   // fecha o browser
-  await browser.close();
+  // await browser.close();
 });
 
 // guardara nossos seletores
@@ -54,6 +53,9 @@ describe("Funções básicas do playwright", () => {
     const expectedUrl = "https://letcode.in/";
     // puxa a url da pagina
     const url = await page.url();
+
+    // metodo double click
+    // await page.dblClick();
 
     // valida se a pagina foi para url certa
     expect(url).toEqual(expectedUrl);
@@ -135,11 +137,11 @@ describe("Funções básicas do playwright", () => {
     const edit = await page.locator("a[href='/edit']");
     console.log(`edit value == ${await edit.textContent()}`);
 
-    const buttons = await page.locator("a[href='/buttons']");
+    const buttons = await page.$("a[href='/buttons']");
     console.log(`button value == ${await buttons.textContent()}`);
 
     // captura multiplos elementos
-    const cards = await page.$$("div[class='column is-3-desktop is-6-tablet']");
+    const cards = await page.$$("div[class='']");
     console.log(`cards com $$ == ${cards.length}`);
     console.timeEnd();
   });
@@ -154,5 +156,79 @@ describe("Funções básicas do playwright", () => {
 
     // retira um check no radio
     await page.uncheck("xpath=(//div[@class='field'])[6]/label[2]/input");
+  });
+
+  test("Nova pagina", async () => {
+    await page.click("a[href='/windows']");
+
+    const [novaPagina] = await Promise.all([
+      context.waitForEvent("page"),
+      await page.click("#home"),
+    ]);
+
+    console.log(await novaPagina.url());
+
+    await novaPagina.close();
+  });
+
+  test("multiplas paginas", async () => {
+    await page.click("a[href='/windows']");
+
+    const [multipage] = await Promise.all([
+      context.waitForEvent("page"),
+      await page.click("#multi"),
+    ]);
+
+    await multipage.waitForLoadState();
+
+    // $ == page
+    // pageOne = vai representar pagina aberta
+    // pageTwo = a segunda pagina
+    const [$, pageOne, pageTwo] = await multipage.context().pages();
+
+    console.log(await pageOne.url(), await pageTwo.url());
+
+    await pageOne.close();
+    await pageTwo.close();
+  });
+
+  test("frames", async () => {
+    await page.click("a[href='/frame']");
+
+    await page.waitForLoadState();
+
+    const frame = page.frame({ name: "firstFr" });
+
+    await frame.fill("input[name='fname']", "Demetrio");
+    await frame.fill("input[name='lname']", "dev");
+
+    /**
+     * em casos onde o iframe possui um iframe dentro
+     * usamos o método abaixo para manuseá-los a variavel 'frames' retornara um array
+     */
+    const frames = await frame.childFrames();
+
+    await frames[0].fill("input[name='email']", "meuEmail@gmail.com");
+
+    await page.waitForTimeout(4000);
+  });
+
+  test("drag and drop", async () => {
+    await page.click("a[href='/dropable']");
+
+    const drag = await page.$("#draggable");
+    const drop = await page.$("#droppable");
+
+    // metodo boundingBox retorna uma caixa com os tamanhos das coordenadas x,y e height, width
+    const dragBound = await drag.boundingBox();
+    const dropBound = await drop.boundingBox();
+
+    // aqui começa o drag em drop, se utiiza os metodos do mouse para tais ações
+    await page.mouse.move(dragBound.x, dragBound.y);
+    await page.mouse.down();
+    await page.mouse.move(dropBound.x, dropBound.y);
+    await page.mouse.down();
+
+    await page.waitForTimeout(4000);
   });
 });
